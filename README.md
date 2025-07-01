@@ -1,66 +1,47 @@
+# 🚀 Databricks Modular Data Lakehouse
 
-# 🌊 Lakehouse Flow: Building Scalable Pipelines with Databricks & DBT
+This project is an **end-to-end modular data engineering pipeline** built with **Apache Spark**, **Databricks**, **Delta Lake**, and **dbt**, designed to support structured, real-time and historical analysis on aviation-related datasets: **bookings**, **flights**, **airports**, and **passengers**.
 
-An end-to-end data engineering project that demonstrates how to architect a modern data lakehouse using **Databricks**, **Spark Structured Streaming**, **Auto Loader**, and **dbt**. This project showcases best practices from ingestion to the Silver layer using **LakeFlow Declarative Pipelines**, with a dynamic and modular implementation of the Gold layer using surrogate keys, CDC, and automated fact-dimension pipelines.
-
----
-
-## 🧱 Architecture Overview
-
-### ✅ Implemented
-- **Incremental ingestion** with Spark Streaming & Auto Loader
-- **Parameterized pipeline control** using Databricks Jobs
-- **LakeFlow (DLT) declarative pipelines** for the Silver layer
-- **Managed volumes and schema separation** for Bronze, Silver, and Gold layers
-- **Path-driven, modularized ingestion logic**
-- **Dynamic Fact & Dimension pipelines** in Gold layer
-
-### 🏗️ In Progress
-- dbt integration and version-controlled data modeling
-- Documentation, testing, and lineage with dbt
-- Multi-threading optimization for large scale processing
+Currently, the pipeline is built up to the **Silver Layer**. The **Gold Layer** with advanced star-schema modeling and dbt integrations is in-progress.
 
 ---
 
-## 📂 Project Structure
+## 🌐 Architecture Overview
 
-```
-📁 notebooks/
-│   ├── 00_setup_environment.py
-│   ├── 01_bronze_ingestion_autoloader.py
-│   ├── 02_silver_layer_dlt.py
-│   ├── gold_layer_dimensions.py
-│   └── gold_fact.py
-│
-📁 dlt/
-│   └── dlt_silver_layer.py
-│
-📁 dbt/
-│   ├── models/
-│   └── dbt_project.yml
-│
-📁 images/
-│   └── architecture-diagram.png
-```
+### Lakehouse Layers:
+
+1. **Raw (External/Managed Volumes)**
+   - Upload and organize raw datasets in Databricks-managed volumes (S3 backend).
+
+2. **Bronze Layer**
+   - Ingests raw data incrementally using **Spark Structured Streaming** via **Auto Loader**.
+   - Paths, schemas, and control flow are parameterized for reuse across datasets.
+
+3. **Silver Layer**
+   - Built using **Lakehouse Flow (DLT)** declarative pipelines.
+   - Transforms bronze data using dictionary-driven logic and DLT decorators (`@dlt.table`).
+   - Enables schema evolution and CDC (Change Data Capture).
+
+4. **Gold Layer (In-Progress)**
+   - Star schema with **dimension** and **fact** tables.
+   - Incorporates Slowly Changing Dimensions (Type 1/2).
+   - Automates surrogate key generation.
+   - Dynamic logic for reusable dimension and fact generation.
 
 ---
 
-## 🏗️ Setup & Environment
+## 📝 Setup Instructions
 
-### ⚙️ Create Managed Volumes & Schemas
-
-Use a setup notebook to execute the following:
+### ✏️ Volume & Schema Creation
 ```sql
-CREATE SCHEMA workspace.rawschema;
+-- Create raw managed volume and subfolders
 CREATE VOLUME workspace.rawschema.rawvolume;
+dbutils.fs.mkdirs("/Volumes/workspace/rawschema/rawvolume/rawdata/bookings");
+dbutils.fs.mkdirs("/Volumes/workspace/rawschema/rawvolume/rawdata/flights");
+dbutils.fs.mkdirs("/Volumes/workspace/rawschema/rawvolume/rawdata/airports");
+dbutils.fs.mkdirs("/Volumes/workspace/rawschema/rawvolume/rawdata/customers");
 
--- Prepare folder structure in volume
-dbutils.fs.mkdirs("/Volumes/workspace/rawschema/rawvolume/rawdata/bookings")
-dbutils.fs.mkdirs("/Volumes/workspace/rawschema.rawvolume/rawdata/flights")
-dbutils.fs.mkdirs("/Volumes/workspace/rawschema.rawvolume/rawdata/airports")
-dbutils.fs.mkdirs("/Volumes/workspace/rawschema.rawvolume/rawdata/customers")
-
--- Bronze, Silver, Gold layers
+-- Create schemas and volumes for lakehouse layers
 CREATE SCHEMA workspace.bronze;
 CREATE VOLUME workspace.bronze.bronzevolume;
 
@@ -73,93 +54,97 @@ CREATE VOLUME workspace.gold.goldvolume;
 
 ---
 
-## ⚡ Bronze Layer: Auto Loader Streaming
+## 🚀 Bronze Layer (Auto Loader Ingestion)
 
-- Ingest data using **Databricks Auto Loader** for scalable file ingestion.
-- Control flow uses array-driven logic to dynamically load various tables.
-- Ingestion is incremental using **Structured Streaming** and `cloudFiles`.
-
----
-
-## 🧪 Silver Layer: LakeFlow DLT Pipelines
-
-- Implemented using `@dlt.table` decorators in Python modules.
-- Transforms and enriches Bronze data for analytical usability.
-- CDC logic and schema validation are performed through LakeFlow DAGs.
-- Uses dictionaries to define transformation logic per table.
+- Built using Spark Structured Streaming + Auto Loader.
+- Paths, file formats, and schema hints are handled dynamically using an array-based control flow.
+- Supports ingestion from managed volumes into Delta Lake format.
 
 ---
 
-## ✨ Gold Layer: Dimensional Modeling with Dynamic Pipelines
+## 🚀 Silver Layer (Lakehouse Flow Pipelines)
 
-### Overview
-At the Gold layer, we construct a **Star Schema** using both dimension and fact tables with incremental and dynamic PySpark logic.
+Implemented using **DLT Python scripts**, not notebooks, for better modularity and CI/CD readiness.
 
-### 🧩 Dimension Table Creation (`gold_layer_dimensions.py`)
-
-- Surrogate keys are generated using `monotonically_increasing_id()`.
-- Incremental changes are fetched based on a `modifiedDate` column.
-- Pipeline is fully parameterized using:
-  - List comprehensions for multiple dimension creation.
-  - Reusable code blocks and dynamic joins.
-- Records are merged using `DeltaTable.merge()`.
-
-### 📈 Fact Table Construction (`gold_fact.py`)
-
-- Dynamically builds `FactBookings` by joining all dimension tables.
-- Uses a function to build SQL JOIN logic for scalability.
-- CDC is used to determine new vs existing records.
-- Joins are executed based on configured `join_key` definitions per dimension.
-- Automatically inserts surrogate keys into the final fact table.
+Key Features:
+- **@dlt.table** decorators define table logic.
+- A central **transformation dictionary** is passed to dynamically control table creation logic.
+- Enables quick extension and maintenance.
+- Supports **dry runs** to pre-check DAG build and error validation.
 
 ---
 
-## 🧩 dbt Integration (Planned)
+## 📊 Gold Layer (In Progress)
 
-- Connect to Databricks SQL endpoint via `profiles.yml`
-- Use version control and modular dbt models to query and document Gold layer tables.
-- Run tests, generate docs, and build model dependencies with `dbt run`, `dbt test`, and `dbt docs`.
+### ✨ Dimension Tables
 
----
+- Each dimension (e.g., `DimFlights`, `DimAirports`, etc.) uses a consistent pattern:
+  - Dynamic handling of keys and columns.
+  - CDC filtering based on `modifiedDate`.
+  - Surrogate key generation using `monotonically_increasing_id()`.
+  - Merge into existing Delta Tables via `DeltaTable.merge()`.
 
-## 🧪 Data Domain Summary
+### 📈 Fact Table
 
-This project analyzes and connects the following datasets:
-- **Passengers**: Personal data and demographics.
-- **Airports**: Geolocation and operational metadata.
-- **Flights**: Time, location, and aircraft routes.
-- **Bookings**: Financials and passenger activity.
-
-All entities flow from Raw → Bronze → Silver → Gold layers with incremental, scalable transformation logic.
-
----
-
-## 🧠 Tech Stack
-
-- **Databricks (Unity Catalog, SQL Warehouse)**
-- **Apache Spark** (Streaming, Structured)
-- **Delta Lake + DLT (LakeFlow)**
-- **dbt (planned for modeling)**
+- A dynamic function builds the SQL query to join dimensions onto the base fact.
+- Columns are dynamically selected.
+- Dimensions are joined via configurable `join_key` metadata.
+- Result is upserted into `FactBookings` using merge logic.
 
 ---
 
-## 🚀 How to Run
+## 🔗 dbt Integration (Planned)
 
-1. **Upload raw files** into the defined volume directories.
-2. **Run Bronze notebook** to stream raw data into Delta tables.
-3. **Run Silver DLT pipeline** to curate enriched data.
-4. **Run Gold layer dimension notebook** (`gold_layer_dimensions.py`).
-5. **Run Fact notebook** (`gold_fact.py`) to generate `FactBookings`.
-6. (**Optional**) Connect dbt to the SQL endpoint for model development.
+- dbt will connect to the **Databricks SQL Warehouse** endpoint.
+- dbt models will be built on top of Gold Layer tables.
+- Enables version control, lineage tracking, and testing via dbt YAML.
 
 ---
 
-## 📸 Architecture Diagram
+## 📚 Notebooks Summary
 
-![Architecture](./images/architecture-diagram.png)
+### Bronze Layer: `bronze_loader.py`
+- Uses control flow over a list of tables
+- Auto Loader reads from `rawvolume` and writes to `bronzevolume`
+
+### Silver Layer: `dlt_silver_layer.py`
+- Transforms bronze to silver
+- Uses dictionary-driven logic for maintainability
+
+### Gold Layer: `dim_dynamic_builder.py`
+- Dynamically builds all dimension tables
+- Uses CDC, surrogate keys, and Spark SQL merges
+
+### Gold Layer: `fact_dynamic_builder.py`
+- Dynamically builds fact table by joining to dimensions
+- Supports incremental refresh via `modifiedDate`
 
 ---
 
-## 📬 Contact
+## 💎 Technologies Used
 
-For questions or issues, please open a GitHub issue or contact the maintainer.
+| Component | Purpose |
+|----------|---------|
+| **Databricks** | Unified platform for Spark + DLT + SQL |
+| **Auto Loader** | Scalable file ingestion with schema evolution |
+| **DLT (LakeFlow)** | Declarative transformation pipelines |
+| **Delta Lake** | Incremental processing with ACID guarantees |
+| **dbt** | Model governance, lineage, testing (planned) |
+
+---
+
+## 🚫 Still To Do
+
+- Finalize and validate Gold Layer notebooks.
+- Configure and run dbt against Databricks SQL endpoint.
+- Enable CI/CD via GitHub Actions or Azure DevOps.
+- Add quality checks (e.g., Great Expectations, dbt tests).
+
+---
+
+## ✨ Outcome
+
+By the end of this project, we'll have a fully operational, modular, and maintainable lakehouse pipeline capable of processing aviation records with full support for schema management, historical change tracking, and automated model generation.
+
+---
+
