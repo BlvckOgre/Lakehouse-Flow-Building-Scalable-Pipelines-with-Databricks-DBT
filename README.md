@@ -22,7 +22,7 @@ Currently, the pipeline is built up to the **Silver Layer**. The **Gold Layer** 
    - Transforms bronze data using dictionary-driven logic and DLT decorators (`@dlt.table`).
    - Enables schema evolution and CDC (Change Data Capture).
 
-4. **Gold Layer (In-Progress)**
+4. **Gold Layer **
    - Star schema with **dimension** and **fact** tables.
    - Incorporates Slowly Changing Dimensions (Type 1/2).
    - Automates surrogate key generation.
@@ -74,7 +74,7 @@ Key Features:
 
 ---
 
-## 📊 Gold Layer (In Progress)
+## 📊 Gold Layer 
 
 ### ✨ Dimension Tables
 
@@ -93,7 +93,7 @@ Key Features:
 
 ---
 
-## 🔗 dbt Integration (Planned)
+## 🔗 dbt Integration 
 
 - dbt will connect to the **Databricks SQL Warehouse** endpoint.
 - dbt models will be built on top of Gold Layer tables.
@@ -129,7 +129,7 @@ Key Features:
 | **Auto Loader** | Scalable file ingestion with schema evolution |
 | **DLT (LakeFlow)** | Declarative transformation pipelines |
 | **Delta Lake** | Incremental processing with ACID guarantees |
-| **dbt** | Model governance, lineage, testing (planned) |
+| **dbt** | Model governance, lineage, testing  |
 
 ---
 
