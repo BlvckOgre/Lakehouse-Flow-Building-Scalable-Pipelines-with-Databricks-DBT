@@ -22,7 +22,7 @@ Currently, the pipeline is built up to the **Silver Layer**. The **Gold Layer** 
    - Transforms bronze data using dictionary-driven logic and DLT decorators (`@dlt.table`).
    - Enables schema evolution and CDC (Change Data Capture).
 
-4. **Gold Layer **
+4. **Gold Layer**
    - Star schema with **dimension** and **fact** tables.
    - Incorporates Slowly Changing Dimensions (Type 1/2).
    - Automates surrogate key generation.
